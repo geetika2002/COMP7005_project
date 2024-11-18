@@ -40,8 +40,13 @@ def start_client(ip, port, timeout):
                 #Wait for acknowledgement
                 try: 
                     data, server_address = client_socket.recvfrom(1024)
-                    print(f"Recieved acknowledgment: {data.decode()} from {server_address}")
-                    acknowledgement_received = True
+                    ack_message = data.decode() #Decode the received acknowledgment 
+
+                    if ack_message == "ACK":
+                        print(f"Recieved acknowledgment: {ack_message} from {server_address}")
+                        acknowledgement_received = True
+                    else: 
+                        print("Unexpected acknowledgement: {ack_message}.")
 
                 except socket.timeout: 
                     print(f"No acknowledgement received within {timeout} seconds. Retrying attempt {retries + 1} of 5")
