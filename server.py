@@ -1,5 +1,6 @@
 import socket 
 import argparse
+import struct
 
 def start_server(ip_address, port): 
 #Create a UDP socket
@@ -11,13 +12,18 @@ def start_server(ip_address, port):
         try: 
             #Recieve data from client
             data, client_address = server_socket.recvfrom(1024)
-            print(f"Recieved message: {data.decode()} from {client_address}")
 
+            #Unpack the protocol (Version + content size + message content)
+            version, content_size = struct.unpack('!B H', data[:3]) #Unpack first bytes for version and content size
+            content = data[3:] #The remaining bytes are the message content 
+
+            print(f"Received message: {content.decode()} (Version: {version}), (Size: {content_size}) from {client_address}")
+            
             #Send acknowledgement
             ack_message = "ACK"
             server_socket.sendto(ack_message.encode(), client_address)
             print(f"Sent acknowledgement to {client_address}")
-            
+
         except KeyboardInterrupt:
             print("Server shutting down...")
             break

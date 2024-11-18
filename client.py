@@ -1,6 +1,7 @@
 import argparse
 import socket
 import time
+import struct 
 
 def start_client(ip, port, timeout):
 
@@ -26,8 +27,14 @@ def start_client(ip, port, timeout):
             #Retry sending message if no acknowledgment is received
             while retries < 5 and not acknowledgement_received: 
                 
-                #Send message to server
-                client_socket.sendto(message.encode(), (ip, port))
+                #Protocol: Version (1 byte), Content size (2 bytes), Message content (variable size)
+                version = 1 
+                content = message.encode()
+                content_size = len(content)
+
+                #Pack the message (Version + Content size + Message content)
+                message_to_send = struct.pack('!B H', version, content_size) + content
+                client_socket.sendto(message_to_send, (ip, port))
                 print(f"Sent message: {message} to {ip}:{port}")
 
                 #Wait for acknowledgement
@@ -40,6 +47,7 @@ def start_client(ip, port, timeout):
                     print(f"No acknowledgement received within {timeout} seconds. Retrying attempt {retries + 1} of 5")
                     retries += 1 #Increment retry count 
                     time.sleep(timeout)
+
             #If the acknowledgment is not received after 5 attempts
             if not acknowledgement_received: 
                 print(f"Failed to recieve acknowledgment after 5 retries. Giving up...")
