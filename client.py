@@ -1,9 +1,12 @@
 import argparse
 import socket
 import time
-import struct 
+import struct
+
 
 def start_client(ip, port, timeout):
+
+    message_id = 0
 
     #Create UDP socket
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)    
@@ -29,11 +32,12 @@ def start_client(ip, port, timeout):
                 
                 #Protocol: Version (1 byte), Content size (2 bytes), Message content (variable size)
                 version = 1 
+                message_id += 1
                 content = message.encode()
                 content_size = len(content)
 
                 #Pack the message (Version + Content size + Message content)
-                message_to_send = struct.pack('!B H', version, content_size) + content
+                message_to_send = struct.pack('!B I H ', version, message_id, content_size) + content
                 client_socket.sendto(message_to_send, (ip, port))
                 print(f"Sent message: {message} to {ip}:{port}")
 
@@ -42,11 +46,16 @@ def start_client(ip, port, timeout):
                     data, server_address = client_socket.recvfrom(1024)
                     ack_message = data.decode() #Decode the received acknowledgment 
 
-                    if ack_message == "ACK":
-                        print(f"Recieved acknowledgment: {ack_message} from {server_address}")
+                    # Unpack the received acknowledgment (Message ID + ACK string)
+                    ack_message_id, ack_status = struct.unpack('!I 3s', data[:7])  # Assuming ACK is 3 bytes
+                    ack_status = ack_status.decode()  # Decode acknowledgment string
+
+                    if ack_status == "ACK" and ack_message_id == message_id:
+                        print(f"Received acknowledgment for Message ID {ack_message_id} from {server_address}")
                         acknowledgement_received = True
-                    else: 
-                        print("Unexpected acknowledgement: {ack_message}.")
+                    else:
+                        print(f"Unexpected acknowledgment: {ack_status} for Message ID {ack_message_id}")
+
 
                 except socket.timeout: 
                     print(f"No acknowledgement received within {timeout} seconds. Retrying attempt {retries + 1} of 5")

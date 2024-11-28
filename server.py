@@ -14,14 +14,14 @@ def start_server(ip_address, port):
             data, client_address = server_socket.recvfrom(1024)
 
             #Unpack the protocol (Version + content size + message content)
-            version, content_size = struct.unpack('!B H', data[:3]) #Unpack first bytes for version and content size
+            version, message_id, content_size = struct.unpack('!B I H', data[:7]) #Unpack first bytes for version and content size
             content = data[3:] #The remaining bytes are the message content 
 
             print(f"Received message: {content.decode()} (Version: {version}), (Size: {content_size}) from {client_address}")
             
-            #Send acknowledgement
-            ack_message = "ACK"
-            server_socket.sendto(ack_message.encode(), client_address)
+            #Send acknowledgement to client
+            response = struct.pack('!I 3s', message_id, b"ACK")
+            server_socket.sendto(response, client_address)
             print(f"Sent acknowledgement to {client_address}")
 
         except KeyboardInterrupt:
