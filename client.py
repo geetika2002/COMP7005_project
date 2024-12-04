@@ -26,13 +26,13 @@ def start_client(ip, port, timeout):
 
             retries = 0 
             acknowledgement_received = False 
+            message_id += 1
 
             #Retry sending message if no acknowledgment is received
             while retries < 5 and not acknowledgement_received: 
                 
                 #Protocol: Version (1 byte), Content size (2 bytes), Message content (variable size)
-                version = 1 
-                message_id += 1
+                version = 1
                 content = message.encode()
                 content_size = len(content)
 
