@@ -22,6 +22,7 @@ def load_settings_from_file(file_path):
         with settings_lock:
             proxy_settings.update(updated_settings)
             print("Settings reloaded successfully.")    
+            print(proxy_settings)
     except Exception as e:
         print(f"Failed to reload settings: {e}")
 
@@ -74,11 +75,11 @@ def start_proxy(listen_ip, listen_port, target_ip, target_port, client_drop, ser
             print(f"Received packet from client {client_address}")
 
             #Simulate packet loss for client-to-server direction
-            if simulate_packet_loss(client_drop):
+            if simulate_packet_loss(proxy_settings['client_drop']):
                 print("Packet dropped (client to server).")
             else: 
                 #Simulate delay for client-to-server direction
-                if simulate_packet_delay(client_delay, client_delay_time):
+                if simulate_packet_delay(proxy_settings['client_delay'], proxy_settings['client_delay_time']):
                     print(f"Packet delayed (client to server).")
 
                 #Forward the packet to the server
@@ -87,17 +88,17 @@ def start_proxy(listen_ip, listen_port, target_ip, target_port, client_drop, ser
 
             #Receieve data from server
             data, server_address = proxy_socket.recvfrom(1024)
-            print(f"Forwarded packet from server {server_address}")
+            print(f"Trying to forward packet from server {server_address}")
 
             #Simulate packet loss for server-to-client direction 
-            if simulate_packet_loss(server_drop): 
+            if simulate_packet_loss(proxy_settings['server_drop']): 
                 print("Packet dropped (server to client)")
 
             else:
                 #Simulate delay for server-to-client direction
-                if simulate_packet_delay(server_delay, server_delay_time):
+                if simulate_packet_delay(proxy_settings['server_delay'], proxy_settings['server_delay_time']):
                     print(f"Packet delayed (server to client)")
-                
+                    
                 #Forward the packet back to the client
                 proxy_socket.sendto(data, client_address)
                 print(f"Forwarded packet to client {client_address}")
